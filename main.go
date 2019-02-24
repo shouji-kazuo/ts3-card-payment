@@ -10,7 +10,7 @@ import (
 	"gopkg.in/urfave/cli.v2"
 )
 
-var ts3URL = "https://ts3card.com/"
+var ts3URL = "https://my.ts3card.com/webapp/login/login.jsp"
 
 func main() {
 	app := &cli.App{
@@ -63,11 +63,19 @@ func main() {
 				return err
 			}
 
-			ts3.Navigate(&ts3.Config{
+			amount, err := ts3.Navigate(&ts3.Config{
 				URL:      ts3URL,
-				Username: "",
-				Password: "hoge",
+				Username: username,
+				Password: password,
 			})
+			if err != nil {
+				return err
+			}
+
+			//TODO 手抜きして全部string型なので，Dateとかintで日付・金額を取れるようにしたい
+			fmt.Printf("%s\t%s\n", amount.PreviousMonthHeader, amount.PreviousMonthAmount)
+			fmt.Printf("%s\t%s\n", amount.CurrentMonthHeader, amount.CurrentMonthAmount)
+			fmt.Printf("%s\t%s\n", amount.NextMonthHeader, amount.NextMonthAmount)
 
 			return nil
 		},

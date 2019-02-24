@@ -1,8 +1,7 @@
 package ts3
 
 import (
-	"fmt"
-	"os"
+	"time"
 
 	"github.com/sclevine/agouti"
 )
@@ -13,44 +12,93 @@ type Config struct {
 	Password string
 }
 
-var (
-	driver *agouti.WebDriver
-)
+type AmountResult struct {
+	PreviousMonthHeader string
+	PreviousMonthAmount string
+	CurrentMonthHeader  string
+	CurrentMonthAmount  string
+	NextMonthHeader     string
+	NextMonthAmount     string
+}
 
-func init() {
-	driver = agouti.ChromeDriver(
+func Navigate(config *Config) (*AmountResult, error) {
+	driver := agouti.ChromeDriver(
 		agouti.ChromeOptions("args", []string{
 			"--headless",
 		}),
 		agouti.Debug,
 	)
 	if err := driver.Start(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		if err2 := driver.Stop(); err2 != nil {
-			fmt.Fprintln(os.Stderr, err2)
-		}
-		os.Exit(1)
+		return nil, err
 	}
-}
 
-// Navigate is HOGE.
-// ログイン→ https://my.ts3card.com/webapp/login/login.jsp
-// username→ <input type="text" name="vo.loginId" maxlength="30" value="" id="login" style="ime-mode: disabled;" class="login-input">
-// password→ <input type="password" name="vo.password" maxlength="30" value="" id="pass" class="pass-input">
-func Navigate(config *Config) error {
 	page, err := driver.NewPage()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err = page.Navigate(config.URL); err != nil {
-		return err
+		return nil, err
 	}
-	getSource, err := page.HTML()
-	fmt.Println(getSource)
-	return nil
-}
+	loginTextInput := page.FindByID("login")
+	passwordInput := page.FindByID("pass")
+	loginTextInput.Fill(config.Username)
+	passwordInput.Fill(config.Password)
 
-// Close is 最後にかならず呼んでね.
-func Close() error {
-	return driver.Stop()
+	// ログイン
+	if err = page.FindByXPath(`//img[@alt="ログイン"]`).Click(); err != nil {
+		return nil, err
+	}
+	time.Sleep(1 * time.Second)
+
+	// 詳細 をクリック
+	if err = page.FindByXPath(`//*[@id="MeisaiDetail"]/div[1]/a`).Click(); err != nil {
+		return nil, err
+	}
+	time.Sleep(1 * time.Second)
+
+	// 次へ をクリック
+	if err = page.FindByXPath(`//*[@id="center"]/span/a`).Click(); err != nil {
+		return nil, err
+	}
+	time.Sleep(1 * time.Second)
+
+	// 前回(xx月xx日)ご請求分
+	prevMonthHeader, err := page.FindByXPath(`//*[@id="wrap"]/div[2]/div/div/div[2]/div[1]/table/tbody/tr[1]/th`).Text()
+	if err != nil {
+		return nil, err
+	}
+	// 前回の金額
+	prevMonthAmount, err := page.FindByXPath(`//*[@id="wrap"]/div[2]/div/div/div[2]/div[1]/table/tbody/tr[1]/td[1]`).Text()
+	if err != nil {
+		return nil, err
+	}
+
+	// 今回(xx月xx日)ご請求分
+	currentMonthHeader, err := page.FindByXPath(`//*[@id="wrap"]/div[2]/div/div/div[2]/div[1]/table/tbody/tr[2]/th`).Text()
+	if err != nil {
+		return nil, err
+	}
+	// 今回の金額
+	currentMonthAmount, err := page.FindByXPath(`//*[@id="wrap"]/div[2]/div/div/div[2]/div[1]/table/tbody/tr[2]/td[1]`).Text()
+	if err != nil {
+		return nil, err
+	}
+	// 次回(xx月xx日)ご請求分
+	nextMonthHeader, err := page.FindByXPath(`//*[@id="wrap"]/div[2]/div/div/div[2]/div[1]/table/tbody/tr[3]/th`).Text()
+	if err != nil {
+		return nil, err
+	}
+	// 次回の金額
+	nextMonthAmount, err := page.FindByXPath(`//*[@id="wrap"]/div[2]/div/div/div[2]/div[1]/table/tbody/tr[3]/td[1]`).Text()
+	if err != nil {
+		return nil, err
+	}
+	return &AmountResult{
+		PreviousMonthHeader: prevMonthHeader,
+		PreviousMonthAmount: prevMonthAmount,
+		CurrentMonthHeader:  currentMonthHeader,
+		CurrentMonthAmount:  currentMonthAmount,
+		NextMonthHeader:     nextMonthHeader,
+		NextMonthAmount:     nextMonthAmount,
+	}, nil
 }
