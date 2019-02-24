@@ -1,7 +1,7 @@
 
 # ts3-card-payment
 
-TS CUBICカード(https://ts3card.com/)にログインして請求金額を取得するスクレイピングツール．
+TS CUBICカード https://ts3card.com/ にログインして請求金額を取得するスクレイピングツール．
 
 ## Requirements
 - Golang (>= 1.8.1)
