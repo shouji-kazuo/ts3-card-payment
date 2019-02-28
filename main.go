@@ -20,7 +20,7 @@ func main() {
 		Version:   "v1.0.0",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "user",
+				Name:    "username",
 				Aliases: []string{"u"},
 				Usage:   "set user name to login ts3card.com",
 			},
@@ -31,8 +31,8 @@ func main() {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			username := ""
-			password := ""
+			username := c.String("username")
+			password := c.String("password")
 
 			onMissingUsername := func() error {
 				fmt.Print("Enter username: ")
