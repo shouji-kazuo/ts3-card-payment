@@ -48,7 +48,10 @@ func Navigate(config *Config) (*AmountResult, error) {
 	if err = page.FindByXPath(`//img[@alt="ログイン"]`).Click(); err != nil {
 		return nil, err
 	}
-	time.Sleep(1 * time.Second)
+
+	// うざいポップアップ (XPath = /html/body/script[4]) を抑止したい
+	// 超暫定対応だが，待てばポップアップは消える
+	time.Sleep(5 * time.Second)
 
 	// 詳細 をクリック
 	if err = page.FindByXPath(`//*[@id="MeisaiDetail"]/div[1]/a`).Click(); err != nil {
